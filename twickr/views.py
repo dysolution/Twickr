@@ -11,11 +11,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 try:
-	import flickrapi
-except ImportError:
-	fatal_error = "flickrapi library not available. Please install it."
-
-try:
 	from getty.settings import FLICKR_API_KEY as api_key
 except ImportError:
 	api_key = None
@@ -110,29 +105,22 @@ def get_photo_url(keyword, api_key):
 		logging.error('No API key provided.')
 		return None
 	
-	'''This was an initial attempt to directly interact with
-	the Flickr API rather than keeping the dependency on the
-	flickrapi package. It could be fixed and used in the future.
-	
-	request_url = 'http://api.flickr.com/services/rest/?api_key=%s&method=flickr.photos.search&format=json&nojsoncallback=1&text=%s' % ( api_key, keyword )
-	print request_url
-	request = urllib2.Request(request_url)
-	json_response = urllib2.urlopen(request)
-	'''
-	flickr = flickrapi.FlickrAPI(api_key)	
 	try:
-		json_response = flickr.photos_search(text=keyword, format='json', media='photos', nojsoncallback='1', per_page='1')
+		request_url = 'http://api.flickr.com/services/rest/?api_key=%s&method=flickr.photos.search&format=json&nojsoncallback=1&media=photos&per_page=1&text=%s' % ( api_key, keyword )
+		request = urllib2.Request(request_url)
+		json_response = urllib2.urlopen(request)		
 	except urllib2.URLError, msg:
 		logger.error("Couldn't contact Flickr: %s" % msg)
 		return None		
 	try:
-		photo = simplejson.loads(json_response)['photos']['photo'][0]
+		json_str = json_response.read()
+		photo = simplejson.loads(json_str)['photos']['photo'][0]
 	except IndexError:
 		logger.warning("No Flickr search result for keyword: %s" % keyword)
 		raise NoHits
 	except Exception, msg:
 		logger.error("Couldn't parse JSON: %s: %s" % (Exception, msg))
-		logger.error("%s" % json_response)
+		logger.error("%s" % json_str)
 		return None
 	photo_url_medium = "http://farm%s.static.flickr.com/%s/%s_%s_m.jpg" % (photo['farm'], photo['server'], photo['id'], photo['secret'])
 	return photo_url_medium
