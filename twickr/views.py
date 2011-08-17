@@ -121,7 +121,7 @@ def get_photo_url(keyword, api_key):
 	'''
 	flickr = flickrapi.FlickrAPI(api_key)	
 	try:
-		json_response = flickr.photos_search(text=keyword, format='json', nojsoncallback='1')
+		json_response = flickr.photos_search(text=keyword, format='json', media='photos', nojsoncallback='1', per_page='1')
 	except urllib2.URLError, msg:
 		logger.error("Couldn't contact Flickr: %s" % msg)
 		return None		
