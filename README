@@ -1,0 +1,34 @@
+Install Python 2.4 or higher, the minimum version required by Django. I used Python 2.7 to develop this app.
+
+Install Django 1.3. I used Django 1.2.3 to develop, but haven't found any problems with using 1.3, the latest stable version.
+* http://www.djangoproject.com/download/1.3/tarball/
+* Extract Django-1.3.tar.gz and cd into that directory.
+* python setup.py install
+
+Extract getty.zip wherever you'd like, such as ~/getty. You'll need to edit, run, or at least know of these files:
+* getty/manage.py
+* getty/settings.py
+* getty/twickr.db
+
+Edit settings.py to update the path for the SQLite DB to wherever you extracted the app. Point to the correct absolute path for the file twickr.db.
+
+Configure a Flickr API key in settings.py. If you don't already have one, get one at: http://www.flickr.com/services/apps/create/apply
+
+Install the FlickrAPI package for Python.
+* http://pypi.python.org/pypi/flickrapi
+* Download source, extract, and cd into that directory.
+* python setup.py install
+
+Run the Django development server:
+* python manage.py runserver
+* point browser to http://127.0.0.1:8000
+* If flickrapi isn't installed properly, you'll get an ImportError in the browser.
+* If you get an OperationalError (unable to open database file), check the path of the SQLite DB in settings.py.
+
+The (rather slick) Django admin interface is available at http://127.0.0.1:8000/admin if you'd like an easy way to look at the DB contents.
+* username: admin password: admin
+
+The SQLite database can be reset if desired:
+* python manage.py flush
+
+

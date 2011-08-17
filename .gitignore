@@ -1,0 +1,4 @@
+settings.py*
+*.bat
+*.db
+manual-tests.txt
