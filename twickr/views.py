@@ -43,6 +43,12 @@ def word_is_acceptable(word):
 	
 	Sanitize the word before it's used as a query on Flickr
 	by adding additional elif statements here if desired.'''
+	try:
+		# We only want simple ASCII keywords.
+		word.encode('ascii')
+	except UnicodeEncodeError:
+		return False
+		
 	if word.lower() in ["the", "a", "an", "that", "i", "you"]:
 		return False
 	else:
@@ -101,6 +107,9 @@ def get_photo_url(keyword, api_key):
 	if keyword is None:
 		logging.warning('No keyword provided.')
 		return None
+	else:
+		logging.info('Keyword: %s' % keyword)
+		
 	if api_key is None:
 		logging.error('No API key provided.')
 		return None
