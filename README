@@ -14,11 +14,6 @@ Edit settings.py to update the path for the SQLite DB to wherever you extracted 
 
 Configure a Flickr API key in settings.py. If you don't already have one, get one at: http://www.flickr.com/services/apps/create/apply
 
-Install the FlickrAPI package for Python.
-* http://pypi.python.org/pypi/flickrapi
-* Download source, extract, and cd into that directory.
-* python setup.py install
-
 Run the Django development server:
 * python manage.py runserver
 * point browser to http://127.0.0.1:8000
