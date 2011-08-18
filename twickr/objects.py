@@ -27,7 +27,7 @@ class Word():
 			
 class Tweet():
 
-	def __init__(self, author=None, text=None, parsed_response=None,
+	def __init__(self, author=None, text=None, tweet_dict=None,
 				 json=None):
 		'''Query Twitter for a tweet and parse the response to 
 		extract its author and its text.
@@ -41,17 +41,17 @@ class Tweet():
 		self.author = author
 		self.text = text
 		self.json = json
-		self.parsed_response = parsed_response
+		self.tweet_dict = tweet_dict
 			
 		if not self.json:
 			self.get_latest_json()
 			
-		if not self.parsed_response:
-			self.parse_json()
+		if not self.tweet_dict:
+			self.parse_json_to_dict()
 			
 		if not self.text:
-			self.author = self.parsed_response['user']['screen_name']
-			self.text = self.parsed_response['text']
+			self.author = self.tweet_dict['user']['screen_name']
+			self.text = self.tweet_dict['text']
 		
 		self.get_words()
 		self.get_keyword()
@@ -67,14 +67,14 @@ class Tweet():
 			logger.error("Couldn't contact Twitter: %s" % msg)
 			self.json = None
 			
-	def parse_json(self):
+	def parse_json_to_dict(self):
 		'''Parse the JSON into a dict with the tweet
 		properties as keys.'''
 		try:
-			self.parsed_response = simplejson.load(self.json)[0]	
+			self.tweet_dict = simplejson.load(self.json)[0]	
 		except Exception, msg:
 			logger.error("Couldn't parse JSON: %s: %s" % (Exception, msg))
-			self.parsed_response = None
+			self.tweet_dict = None
 			
 	def get_words(self):
 		'''Words are defined as the tokens created when the tweet is
@@ -100,7 +100,7 @@ class Tweet():
 			if good_word:
 				self.keyword = good_word
 			else:
-				logging.warning('No acceptable keyword found in tweet.')
+				logging.warning('No acceptable keyword found in tweet. Words: %s' % self.words)
 				self.keyword = None
 
 
