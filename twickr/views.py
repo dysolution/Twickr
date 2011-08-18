@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 from getty.twickr.models import Search
 from getty.twickr.objects import Word, Tweet
-from getty.twickr.flickr import NoHits, get_photo_url
+from getty.twickr.flickr import NoHits, Photo
 
 			
 def main_page(request):
@@ -19,18 +19,15 @@ def main_page(request):
 		objects = {'fatal_error': fatal_error}
 	else:
 		t = Tweet()
-		try:
-			photo_url = get_photo_url(t.keyword)
-			if photo_url:
-				Search.objects.create(tweet_text=t.text, tweet_author=t.author, image_url=photo_url)
-		except NoHits:
-			photo_url = None
+		p = Photo(keyword=t.keyword)
+		if p.url:
+			Search.objects.create(tweet_text=t.text, tweet_author=t.author, image_url=p.url)
 			
 		objects = {
 			'tweet_text': t.text,
 			'tweet_author': t.author,
 			'query_word': t.keyword,
-			'photo_url': photo_url,
+			'photo_url': p.url,
 			'num_searches': Search.objects.count(),
 			}
 	return render_to_response('main-page.html', objects, context_instance=RequestContext(request))	
