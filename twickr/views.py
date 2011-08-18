@@ -19,23 +19,93 @@ from getty.twickr.models import Search
 
 class NoHits(Exception):
 	pass
+
+class Tweet():
+
+	def __init__(self, author=None, text=None, json=None, parsed_response=None):
+		if text is not None:
+			self.author = author
+			self.text = text
+		elif parsed_response is not None:
+			self.parsed_response = dict
+			self.author = self.parsed_response['user']['screen_name']
+			self.text = self.parsed_response['text']
+		elif json is not None:
+			self.json = json
+			self.parsed_response = self.parse_json()
+			self.author = self.parsed_response['user']['screen_name']
+			self.text = self.parsed_response['text']
+		else:
+			self.get_latest_json()
+			if self.json is not None:
+				self.parse_json()
+			# Sanitize the author and text here if desired.
+			if self.parsed_response is not None:
+				self.author = self.parsed_response['user']['screen_name']
+				self.text = self.parsed_response['text']
 	
-def get_latest_public_tweet():
+	def get_latest_json(self):
+		'''Query the Twitter public timeline without
+		passing OAuth credentials to get a JSON response.'''
+		query_url='http://api.twitter.com/1/statuses/public_timeline.json?count=1'
+		request = urllib2.Request(query_url)
+		try:
+			self.json = urllib2.urlopen(request)
+		except urllib2.URLError, msg:
+			logger.error("Couldn't contact Twitter: %s" % msg)
+			self.json = None
+			
+	def parse_json(self):
+		'''Parse the JSON into a dict with the tweet
+		properties as keys.'''
+		try:
+			self.parsed_response = simplejson.load(self.json)[0]	
+		except Exception, msg:
+			logger.error("Couldn't parse JSON: %s: %s" % (Exception, msg))
+			self.parsed_response = None
+			
+
+	
+	
+def get_tweet_json(query_url='http://api.twitter.com/1/statuses/public_timeline.json?count=1'):
 	'''Query the Twitter public timeline without
 	passing OAuth credentials, parse the result
 	as JSON, and return the data, which is indexed by
 	tweet properties as keys.'''
-	request = urllib2.Request('http://api.twitter.com/1/statuses/public_timeline.json?count=1')
+	request = urllib2.Request(query_url)
 	try:
-		response = urllib2.urlopen(request)
+		return urllib2.urlopen(request)
 	except urllib2.URLError, msg:
 		logger.error("Couldn't contact Twitter: %s" % msg)
 		return None
+		
+def parse_tweet_json(tweet_json):
+	'''Given a JSON response from Twitter, return the text
+	and author of the tweet if the data is acceptable.'''
+	# Sanitize the data here if desired.
 	try:	
-		return simplejson.load(response)[0]	
+		tweet_dict = simplejson.load(tweet_json)[0]	
+		return tweet_dict['text'], tweet_dict['user']['screen_name']
 	except Exception, msg:
 		logger.error("Couldn't parse JSON: %s: %s" % (Exception, msg))
+		return None, None		
+	
+def get_words_from_tweet(tweet_text):
+	'''Words are defined as the tokens created when the tweet is
+	split on whitespace.'''
+	if tweet_text:
+		words = tweet_text.split()
+		# Sanitize the words further here if desired.
+		return words
+	else:
 		return None
+
+class Word():
+	pass
+	
+class Keyword(Word):
+	pass
+	
 		
 def word_is_acceptable(word):
 	'''Defines criteria under which a word will be acceptable
@@ -54,24 +124,6 @@ def word_is_acceptable(word):
 	else:
 		return True
 		
-def parse_tweet(tweet_json):
-	'''Return the text and author of the tweet if the data is acceptable.'''
-	# Sanitize the data here if desired.
-	if tweet_json is None:
-		return None, None
-	else:
-		return tweet_json['text'], tweet_json['user']['screen_name']
-	
-def get_words_from_tweet(tweet_text):
-	'''Words are defined as the tokens created when the tweet is
-	split on whitespace.'''
-	if tweet_text:
-		words = tweet_text.split()
-		# Sanitize the words further here if desired.
-		return words
-	else:
-		return None
-	
 def get_word_for_flickr_query(words):
 	'''Given a list of the words in a tweet, return the desired
 	keyword, or None if nothing acceptable can be found.
@@ -113,7 +165,7 @@ def get_photo_url(keyword, api_key):
 	if api_key is None:
 		logging.error('No API key provided.')
 		return None
-	
+
 	try:
 		request_url = 'http://api.flickr.com/services/rest/?api_key=%s&method=flickr.photos.search&format=json&nojsoncallback=1&media=photos&per_page=1&text=%s' % ( api_key, keyword )
 		request = urllib2.Request(request_url)
@@ -142,8 +194,12 @@ def main_page(request):
 	if fatal_error:
 		objects = {'fatal_error': fatal_error}
 	else:
-		tweet = get_latest_public_tweet()
-		tweet_text, tweet_author = parse_tweet(tweet)		
+		'''
+		tweet = get_tweet_json()
+		tweet_text, tweet_author = parse_tweet_json(tweet)
+		'''
+		t = Tweet()
+		tweet_text, tweet_author = t.text, t.author
 		words = get_words_from_tweet(tweet_text)
 		flickr_query_word = get_word_for_flickr_query(words)		
 		try:
