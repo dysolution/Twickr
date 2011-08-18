@@ -1,23 +1,15 @@
-"""
-This file demonstrates two different styles of tests (one doctest and one
-unittest). These will both pass when you run "manage.py test".
-
-Replace these with more appropriate tests for your application.
-"""
-
 from django.test import TestCase
+from getty.twickr.views import Tweet, Word
 
-class SimpleTest(TestCase):
-    def test_basic_addition(self):
-        """
-        Tests that 1 + 1 always equals 2.
-        """
-        self.failUnlessEqual(1 + 1, 2)
+class WordTest(TestCase):
+	def setUp(self):
+		self.good_words = ['foo','dollar','mix','cloud9','23skidoo']
+		self.bad_words = ["the", "a", "an", "that", "I", "you"]
 
-__test__ = {"doctest": """
-Another way to test that 1 + 1 is equal to 2.
-
->>> 1 + 1 == 2
-True
-"""}
-
+	def test_good_words(self):
+		for word in self.good_words:
+			self.assertEqual(Word(word).is_acceptable(), True)
+			
+	def test_bad_words(self):
+		for word in self.bad_words:
+			self.assertEqual(Word(word).is_acceptable(), False)

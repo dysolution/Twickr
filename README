@@ -26,4 +26,7 @@ The (rather slick) Django admin interface is available at http://127.0.0.1:8000/
 The SQLite database can be reset if desired:
 * python manage.py flush
 
+Unit tests can be run:
+* python manage.py test
+
 
