@@ -1,7 +1,10 @@
+import logging
 import urllib2
 			  
 from django.utils import simplejson
 from django.utils.encoding import smart_unicode
+
+logger = logging.getLogger(__name__)
 
 class Word():
 	def __init__(self, content):
