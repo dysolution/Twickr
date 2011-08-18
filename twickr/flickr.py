@@ -16,6 +16,9 @@ class NoHits(Exception):
 class ApiKeyNotSet(Exception):
 	pass
 	
+class UnknownFlickrError(Exception):
+	pass
+	
 class Photo():
 	def __init__(self, api_key=api_key, keyword=None, url=None, size=None):
 		'''Given a keyword, query Flickr for the first matching photo.
@@ -30,6 +33,7 @@ class Photo():
 			self.size = size
 			
 		self.url = url
+		self.photo_dict = None
 			
 		if self.keyword:
 			self.query_flickr()
@@ -46,7 +50,7 @@ class Photo():
 			'media': 'photos',
 			'per_page': '1',
 			'api_key': api_key,
-			'text': self.keyword,
+			'text': self.keyword,			
 			}
 		for param, value in api_params.iteritems():
 			self.request_url += "&%s=%s" % (param, value)
@@ -60,16 +64,21 @@ class Photo():
 	def parse_json_to_dict(self):
 		'''Given a JSON response from Flickr,
 		parse the result into a dict.'''
-		try:
-			json_str = self.json_response.read()
-			self.photo_dict = simplejson.loads(json_str)['photos']['photo'][0]
-		except IndexError:
-			logger.warning("No Flickr search result for keyword: %s" % self.keyword)
-			raise NoHits
-		except Exception, msg:
-			logger.error("Couldn't parse JSON: %s: %s" % (Exception, msg))
-			logger.error("%s" % json_str)
-			self.photo_dict = None
+		self.json_str = self.json_response.read()
+		self.response_dict = simplejson.loads(self.json_str)
+		if self.response_dict['stat'] == 'ok':
+			if self.response_dict['photos']['total'] == '0':
+				logger.warning("No Flickr search result for keyword: %s" % self.keyword)
+				raise NoHits
+			else:
+				self.photo_dict = self.response_dict['photos']['photo'][0]
+		elif self.response_dict['stat'] == 'fail':
+			if self.response_dict['code'] == 100:
+				logger.critical('Please set a valid Flickr API key in settings.py.')
+				raise ApiKeyNotSet
+			else:
+				print self.response_dict
+				raise UnknownFlickrError
 			
 	def get_url(self):
 		'''Given a dict of its properties, construct
