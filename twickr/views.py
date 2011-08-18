@@ -18,7 +18,8 @@ def main_page(request):
 	t = Tweet()
 	logger.warning("Keyword: %s" % t.keyword)
 	try:
-		p = Photo(keyword=t.keyword)		
+		p = Photo(keyword=t.keyword)
+		#p = Photo(keyword="9823fhf823")		
 		photo_url = p.url
 	except ApiKeyNotSet:		
 		return HttpResponse("Bad Flickr API key. Unable to search Flickr.")
