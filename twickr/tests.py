@@ -13,3 +13,24 @@ class WordTest(TestCase):
 	def test_bad_words(self):
 		for word in self.bad_words:
 			self.assertEqual(Word(word).is_acceptable(), False)
+			
+class TweetTooShort(TestCase):
+	def setUp(self):
+		self.tweet = Tweet(author='dysolution', text='Too short.')
+
+	def test_tweet_length(self):
+		self.assertEqual(self.tweet.keyword, None)
+			
+class NoValidKeywords(TestCase):
+	def setUp(self):
+		self.tweet = Tweet(author='dysolution', text="I'll give you the")
+
+	def test_tweet_length(self):
+		self.assertEqual(self.tweet.keyword, None)
+		
+class PickCorrectWord(TestCase):
+	def setUp(self):
+		self.tweet = Tweet(author='dysolution', text="I can't believe it's not butter.")
+
+	def get_third_word(self):
+		self.assertEqual(self.tweet.keyword, "believe")
