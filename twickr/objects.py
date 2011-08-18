@@ -17,7 +17,9 @@ class Word():
 		
 		Sanitize the word before it's used as a query on Flickr
 		by adding additional elif statements here if desired.'''
-		if re.match("^\w+$", self.content) is None:
+		
+		# Allow @usernames, #hashtags, and words with trailing punctuation.
+		if re.match("^[@#]?[\w']+[.!?:]*$", self.content) is None:
 			return False
 			
 		if self.content.lower() in ["the", "a", "an", "that", "i", "you"]:
@@ -55,7 +57,7 @@ class Tweet():
 		
 		self.get_words()
 		self.get_keyword()
-	
+		
 	def get_latest_json(self):
 		'''Query the Twitter public timeline without
 		passing OAuth credentials to get a JSON response.'''
