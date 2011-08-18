@@ -13,10 +13,7 @@ img {padding: 0 auto;}
 </head>
 
 <body>
-{% if fatal_error %}
-	<p class='error'>FATAL ERROR: {{ fatal_error }}</p>
-{% else %}
-	<div id='tweet'>
+<div id='tweet'>
 {% if tweet_text %}
 	<p id='tweet-text'>{{ tweet_text }}</p>
 	<p id='author'>-- @{{ tweet_author }}</p> 
@@ -37,7 +34,6 @@ img {padding: 0 auto;}
 	<div id='caption'>
 	<p class='error'>ERROR: No valid keywords could be extracted.</p>
 	</div>
-{% endif %}
 
 
 <div id='counter'>

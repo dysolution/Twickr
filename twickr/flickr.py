@@ -9,15 +9,20 @@ try:
 	from getty.settings import FLICKR_API_KEY as api_key
 except ImportError:
 	api_key = None
-	fatal_error = "Unable to determine the Flickr API key. Please set it in settings.py."
-
+	
 class NoHits(Exception):
+	pass
+
+class ApiKeyNotSet(Exception):
 	pass
 	
 class Photo():
 	def __init__(self, api_key=api_key, keyword=None, url=None, size=None):
 		'''Given a keyword, query Flickr for the first matching photo.
 		Default is the medium (240 px on longest side) size.'''
+		if not api_key:
+			raise ApiKeyNotSet
+			
 		self.keyword = keyword
 		if size not in ['m','s','t','z','b']:
 			self.size = 'm'
