@@ -22,27 +22,34 @@ class NoHits(Exception):
 
 class Tweet():
 
-	def __init__(self, author=None, text=None, json=None, parsed_response=None):
-		if text is not None:
-			self.author = author
-			self.text = text
-		elif parsed_response is not None:
-			self.parsed_response = dict
-			self.author = self.parsed_response['user']['screen_name']
-			self.text = self.parsed_response['text']
-		elif json is not None:
-			self.json = json
-			self.parsed_response = self.parse_json()
-			self.author = self.parsed_response['user']['screen_name']
-			self.text = self.parsed_response['text']
-		else:
+	def __init__(self, author=None, text=None, parsed_response=None,
+				 json=None):
+		'''Query Twitter for a tweet and parse the response to 
+		extract its author and its text.
+		
+		For testing purposes, a manufactured tweet can be provided in several forms:
+		
+		1. just an author and some text
+		2. a dict in the same format that the JSON parsing would provide
+		3. raw JSON in the same format that Twitter returns
+		'''
+		self.author = author
+		self.text = text
+		self.json = json
+		self.parsed_response = parsed_response
+			
+		if not self.json:
 			self.get_latest_json()
-			if self.json is not None:
-				self.parse_json()
-			# Sanitize the author and text here if desired.
-			if self.parsed_response is not None:
-				self.author = self.parsed_response['user']['screen_name']
-				self.text = self.parsed_response['text']
+			
+		if not self.parsed_response:
+			self.parse_json()
+			
+		if not self.text:
+			self.author = self.parsed_response['user']['screen_name']
+			self.text = self.parsed_response['text']
+		
+		self.get_words()
+		self.get_keyword()
 	
 	def get_latest_json(self):
 		'''Query the Twitter public timeline without
@@ -64,92 +71,56 @@ class Tweet():
 			logger.error("Couldn't parse JSON: %s: %s" % (Exception, msg))
 			self.parsed_response = None
 			
-
-	
-	
-def get_tweet_json(query_url='http://api.twitter.com/1/statuses/public_timeline.json?count=1'):
-	'''Query the Twitter public timeline without
-	passing OAuth credentials, parse the result
-	as JSON, and return the data, which is indexed by
-	tweet properties as keys.'''
-	request = urllib2.Request(query_url)
-	try:
-		return urllib2.urlopen(request)
-	except urllib2.URLError, msg:
-		logger.error("Couldn't contact Twitter: %s" % msg)
-		return None
-		
-def parse_tweet_json(tweet_json):
-	'''Given a JSON response from Twitter, return the text
-	and author of the tweet if the data is acceptable.'''
-	# Sanitize the data here if desired.
-	try:	
-		tweet_dict = simplejson.load(tweet_json)[0]	
-		return tweet_dict['text'], tweet_dict['user']['screen_name']
-	except Exception, msg:
-		logger.error("Couldn't parse JSON: %s: %s" % (Exception, msg))
-		return None, None		
-	
-def get_words_from_tweet(tweet_text):
-	'''Words are defined as the tokens created when the tweet is
-	split on whitespace.'''
-	if tweet_text:
-		words = tweet_text.split()
-		# Sanitize the words further here if desired.
-		return words
-	else:
-		return None
+	def get_words(self):
+		'''Words are defined as the tokens created when the tweet is
+		split on whitespace.'''
+		if self.text:
+			# Sanitize the words further here if desired.
+			self.words = self.text.split()
+		else:
+			self.words = []
+			
+	def get_keyword(self):
+		'''Starting with the 3rd word in the tweet,
+		find the first acceptable word.'''
+		if len(self.words) < 3:
+			logging.warning('Not enough words in phrase. Words: %s' % self.words)
+			self.keyword = None
+		else:				
+			good_word = None
+			for x in range(2, len(self.words)):
+				if Word(self.words[x]).is_acceptable():
+					good_word = self.words[x]					
+					break
+			if good_word:
+				self.keyword = good_word
+			else:
+				logging.warning('No acceptable keyword found in tweet.')
+				self.keyword = None
 
 class Word():
-	pass
-	
-class Keyword(Word):
-	pass
-	
+	def __init__(self, content):
+		self.content = content
 		
-def word_is_acceptable(word):
-	'''Defines criteria under which a word will be acceptable
-	as a keyword with which to search Flickr.
-	
-	Sanitize the word before it's used as a query on Flickr
-	by adding additional elif statements here if desired.'''
-	try:
-		# We only want simple ASCII keywords.
-		word.encode('ascii')
-	except UnicodeEncodeError:
-		return False
+	def is_acceptable(self):
+		'''Defines criteria under which a word will be acceptable
+		as a keyword with which to search Flickr.
 		
-	if word.lower() in ["the", "a", "an", "that", "i", "you"]:
-		return False
-	else:
-		return True
-		
-def get_word_for_flickr_query(words):
-	'''Given a list of the words in a tweet, return the desired
-	keyword, or None if nothing acceptable can be found.
-	
-	Criterion: Either the third word or the next acceptable word
-	given the list of exclusions.'''	
-	if not words:
-		logging.warning('No words provided to get_word_for_flickr_query.')
-		return None
-	else:
-		if len(words) < 3:
-			logging.warning('Not enough words in phrase. Words: %s' % words)
-			return None
+		Sanitize the word before it's used as a query on Flickr
+		by adding additional elif statements here if desired.'''
+		try:
+			# We only want simple ASCII keywords.
+			self.content.encode('ascii')
+		except UnicodeEncodeError:
+			return False
 			
-		'''Starting with the 3rd word in the tweet,
-		look for the first acceptable word.'''
-		acceptable_word = None
-		for x in range(2, len(words)):
-			if word_is_acceptable(words[x]):
-				acceptable_word = words[x]					
-				break
-		if acceptable_word:
-			return acceptable_word		
+		if self.content.lower() in ["the", "a", "an", "that", "i", "you"]:
+			return False
 		else:
-			logging.warning('No acceptable words found in tweet.')
-			return None
+			return True
+		
+		
+		
 			
 def get_photo_url(keyword, api_key):
 	'''Return the URL of the "medium"-sized version of the first photo
@@ -194,27 +165,20 @@ def main_page(request):
 	if fatal_error:
 		objects = {'fatal_error': fatal_error}
 	else:
-		'''
-		tweet = get_tweet_json()
-		tweet_text, tweet_author = parse_tweet_json(tweet)
-		'''
 		t = Tweet()
-		tweet_text, tweet_author = t.text, t.author
-		words = get_words_from_tweet(tweet_text)
-		flickr_query_word = get_word_for_flickr_query(words)		
 		try:
-			photo_url = get_photo_url(flickr_query_word, api_key)
+			photo_url = get_photo_url(t.keyword, api_key)
 			flickr_result_found = True
 		except NoHits:
 			photo_url = None
 			flickr_result_found = False
 		if photo_url:
-			record_search(tweet_text, tweet_author, photo_url)
+			record_search(t.text, t.author, photo_url)
 			
 		objects = {
-			'tweet_text': tweet_text,
-			'tweet_author': tweet_author,
-			'query_word': flickr_query_word,
+			'tweet_text': t.text,
+			'tweet_author': t.author,
+			'query_word': t.keyword,
 			'photo_url': photo_url,
 			'flickr_result_found': flickr_result_found,
 			'num_searches': Search.objects.count(),
