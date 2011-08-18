@@ -27,6 +27,6 @@ The SQLite database can be reset if desired:
 * python manage.py flush
 
 Unit tests can be run:
-* python manage.py test
+* python manage.py test twickr
 
 

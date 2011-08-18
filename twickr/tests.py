@@ -30,7 +30,12 @@ class NoValidKeywords(TestCase):
 		
 class PickCorrectWord(TestCase):
 	def setUp(self):
-		self.tweet = Tweet(author='dysolution', text="I can't believe it's not butter.")
+		example_tweets = []
+		example_tweets.append(Tweet(author='foo', text="I can't believe it's not butter."))
+		example_tweets.append(Tweet(author='foo', text="You're not the boss of me."))
+		example_tweets.append(Tweet(author='foo', text="I scream. You scream. Why are we screaming?"))
 
 	def get_third_word(self):
-		self.assertEqual(self.tweet.keyword, "believe")
+		self.assertEqual(example_tweets[0].keyword, "believe")
+		self.assertEqual(example_tweets[1].keyword, "boss")
+		self.assertEqual(example_tweets[2].keyword, "scream")
