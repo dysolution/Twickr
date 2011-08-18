@@ -55,10 +55,6 @@ def get_photo_url(keyword, api_key):
 	photo_url_medium = "http://farm%s.static.flickr.com/%s/%s_%s_m.jpg" % (photo['farm'], photo['server'], photo['id'], photo['secret'])
 	return photo_url_medium
 			
-def record_search(tweet_text, tweet_author, photo_url):
-	'''Record the tweet data and the resulting image URL to the DB.'''
-	Search.objects.create(tweet_text=tweet_text, tweet_author=tweet_author, image_url=photo_url)
-		
 def main_page(request):
 	if fatal_error:
 		objects = {'fatal_error': fatal_error}
@@ -71,7 +67,7 @@ def main_page(request):
 			photo_url = None
 			flickr_result_found = False
 		if photo_url:
-			record_search(t.text, t.author, photo_url)
+			Search.objects.create(tweet_text=t.text, tweet_author=t.author, image_url=photo_url)
 			
 		objects = {
 			'tweet_text': t.text,
