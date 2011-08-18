@@ -14,31 +14,31 @@ img {padding: 0 auto;}
 
 <body>
 {% if fatal_error %}
-<p class='error'>FATAL ERROR: {{ fatal_error }}</p>
+	<p class='error'>FATAL ERROR: {{ fatal_error }}</p>
 {% else %}
-<div id='tweet'>
+	<div id='tweet'>
 {% if tweet_text %}
-<p id='tweet-text'>{{ tweet_text }}</p>
-<p id='author'>-- @{{ tweet_author }}</p> 
+	<p id='tweet-text'>{{ tweet_text }}</p>
+	<p id='author'>-- @{{ tweet_author }}</p> 
 {% else %}
-<p class='error'>ERROR: Unable to get a tweet from Twitter.</p>
+	<p class='error'>ERROR: Unable to get a tweet from Twitter.</p>
 {% endif %}
 </div>
 
-<div id='caption'>
-{% if not query_word %}
-<p class='error'>ERROR: No valid keywords could be extracted.</p>
+{% if query_word %}
+	<div id='photo'>
+	{% if photo_url %}
+		<img src='{{ photo_url }}' title='{{ query_word }}' alt='{{ query_word }}'/>
+	{% else %}
+		<p class='error'>No photos could be found by searching Flickr for "{{ query_word }}."</p>
+	{% endif %}
+	</div>
+{% else %}	
+	<div id='caption'>
+	<p class='error'>ERROR: No valid keywords could be extracted.</p>
+	</div>
 {% endif %}
-</div>
 
-<div id='photo'>
-{% if photo_url %}
-<img src='{{ photo_url }}' title='{{ query_word }}' alt='{{ query_word }}'/>
-{% endif %}
-{% if not flickr_result_found %}
-<p class='error'>No photos could be found by searching Flickr for "{{ query_word }}."</p>
-{% endif %}
-</div>
 
 <div id='counter'>
 <p id='num-searches'>{{ num_searches }} searches have been performed.</p>

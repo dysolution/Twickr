@@ -21,19 +21,16 @@ def main_page(request):
 		t = Tweet()
 		try:
 			photo_url = get_photo_url(t.keyword)
-			flickr_result_found = True
+			if photo_url:
+				Search.objects.create(tweet_text=t.text, tweet_author=t.author, image_url=photo_url)
 		except NoHits:
 			photo_url = None
-			flickr_result_found = False
-		if photo_url:
-			Search.objects.create(tweet_text=t.text, tweet_author=t.author, image_url=photo_url)
 			
 		objects = {
 			'tweet_text': t.text,
 			'tweet_author': t.author,
 			'query_word': t.keyword,
 			'photo_url': photo_url,
-			'flickr_result_found': flickr_result_found,
 			'num_searches': Search.objects.count(),
 			}
 	return render_to_response('main-page.html', objects, context_instance=RequestContext(request))	
