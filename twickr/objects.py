@@ -1,5 +1,6 @@
 import logging
 import urllib2
+import re
 			  
 from django.utils import simplejson
 from django.utils.encoding import smart_unicode
@@ -16,10 +17,7 @@ class Word():
 		
 		Sanitize the word before it's used as a query on Flickr
 		by adding additional elif statements here if desired.'''
-		try:
-			# We only want simple ASCII keywords.
-			self.content.encode('ascii')
-		except UnicodeEncodeError:
+		if re.match("^\w+$", self.content) is None:
 			return False
 			
 		if self.content.lower() in ["the", "a", "an", "that", "i", "you"]:
