@@ -6,30 +6,30 @@ from django.template import RequestContext
 from django.utils import simplejson
 
 import logging
-logging.basicConfig()
-logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 from getty.twickr.models import Search
-from getty.twickr.objects import Word, Tweet
+from getty.twickr.objects import Word, Tweet, FailWhale
 from getty.twickr.flickr import ApiKeyNotSet, NoHits, UnknownFlickrError, Photo
 
 			
 def main_page(request):
 	t = Tweet()
-	logger.warning("Keyword: %s" % t.keyword)
+	logging.info("Keyword: %s" % t.keyword)
+	photo_url = None
 	try:
 		p = Photo(keyword=t.keyword)
-		photo_url = p.url
+		if p.url:
+			photo_url = p.url
+			Search.objects.create(tweet_text=t.text, tweet_author=t.author, image_url=photo_url)
 	except ApiKeyNotSet:		
 		return HttpResponse("Bad Flickr API key. Unable to search Flickr.")
 	except UnknownFlickrError:
-		logger.error("Unknown error while querying Flickr.")
-		photo_url = None
+		logging.error("Unknown error while querying Flickr.")
 	except NoHits:
-		photo_url = None
+		logging.warning("No Flickr hits for keyword: %s" % t.keyword)
 		
-	if photo_url:
-		Search.objects.create(tweet_text=t.text, tweet_author=t.author, image_url=photo_url)
+	
 		
 	objects = {
 		'tweet_text': t.text,

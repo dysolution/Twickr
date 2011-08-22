@@ -3,8 +3,6 @@ import urllib2
 
 from django.utils import simplejson
 
-logger = logging.getLogger(__name__)
-
 try:
 	from getty.settings import FLICKR_API_KEY as api_key
 except ImportError:
@@ -55,10 +53,11 @@ class Photo():
 		for param, value in api_params.iteritems():
 			self.request_url += "&%s=%s" % (param, value)
 		request = urllib2.Request(self.request_url)
+		logging.debug("Flickr query URL: %s" % self.request_url)
 		try:
 			self.json_response = urllib2.urlopen(request)		
 		except urllib2.URLError, msg:
-			logger.error("Couldn't contact Flickr: %s" % msg)
+			logging.error("Couldn't contact Flickr: %s" % msg)
 			self.json_response = None
 			
 	def parse_json_to_dict(self):
@@ -68,13 +67,14 @@ class Photo():
 		self.response_dict = simplejson.loads(self.json_str)
 		if self.response_dict['stat'] == 'ok':
 			if self.response_dict['photos']['total'] == '0':
-				logger.warning("No Flickr search result for keyword: %s" % self.keyword)
+				logging.warning("No Flickr search result for keyword: %s" % self.keyword)
 				raise NoHits
 			else:
 				self.photo_dict = self.response_dict['photos']['photo'][0]
 		elif self.response_dict['stat'] == 'fail':
 			if self.response_dict['code'] == 100:
-				logger.critical('Please set a valid Flickr API key in settings.py.')
+				logging.critical('Twitter response: %s' % self.response_dict)
+				logging.critical('Please set a valid Flickr API key in settings.py.')
 				raise ApiKeyNotSet
 			else:
 				print self.response_dict

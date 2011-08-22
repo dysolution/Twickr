@@ -5,7 +5,7 @@ import re
 from django.utils import simplejson
 from django.utils.encoding import smart_unicode
 
-logger = logging.getLogger(__name__)
+#logger = logging.getLogger(__name__)
 
 class Word():
 	def __init__(self, content):
@@ -18,8 +18,8 @@ class Word():
 		Sanitize the word before it's used as a query on Flickr
 		by adding additional elif statements here if desired.'''
 		
-		# Allow @usernames, #hashtags, and words with trailing punctuation.
-		if re.match("^[@#]?[\w']+[.!?:]*$", self.content) is None:
+		# Allow @usernames and words with trailing punctuation.
+		if re.match("^@?[\w']+[.!?:]*$", self.content) is None:
 			return False
 			
 		if self.content.lower() in ["the", "a", "an", "that", "i", "you"]:
@@ -27,56 +27,85 @@ class Word():
 		else:
 			return True
 			
+class FailWhale(Exception):
+	pass
+
+class TwitterError(Exception):
+	pass
+	
+class BadTwitterResponse(Exception):
+	pass
+	
 class Tweet():
 
-	def __init__(self, author=None, text=None, tweet_dict=None,
-				 json=None):
+	def __init__(self, author=None, text=None, response_from_twitter=None):
 		'''Query Twitter for a tweet and parse the response to 
 		extract its author and its text.
 		
-		For testing purposes, a manufactured tweet can be provided in several forms:
+		For testing purposes, a tweet or error condition can be simulated:
 		
 		1. just an author and some text
-		2. a dict in the same format that the JSON parsing would provide
-		3. raw JSON in the same format that Twitter returns
+		2. JSON or HTML (for some errors) in the same format that Twitter returns
 		'''
 		self.author = author
 		self.text = text
-		self.json = json
-		self.tweet_dict = tweet_dict
+		self.response_from_twitter = response_from_twitter
+		
+		if self.author and self.text:
+			logging.info("Testing with manufactured tweet: @%s: %s" %
+			(self.author, self.text))
+			self.get_words()
+			self.get_keyword()
+		elif self.response_from_twitter:
+			logging.info("Testing with simulated Twitter response.")
+			self.parse_twitter_response()
+			self.get_words()
+			self.get_keyword()
+		else:
+			self.query_twitter()
+			try:
+				self.parse_twitter_response()
+			except:
+				self.words = None
+				self.keyword = None
+				raise BadTwitterResponse
 			
-		if not self.json:
-			self.get_latest_json()
-			
-		if not self.tweet_dict:
-			self.parse_json_to_dict()
-			
-		if not self.text:
 			self.author = self.tweet_dict['user']['screen_name']
 			self.text = self.tweet_dict['text']
+			logging.debug("Tweet text: %s" % self.text)
+			self.get_words()
+			self.get_keyword()
+				
+			
 		
-		self.get_words()
-		self.get_keyword()
-		
-	def get_latest_json(self):
+	def query_twitter(self):
 		'''Query the Twitter public timeline without
 		passing OAuth credentials to get a JSON response.'''
 		query_url='http://api.twitter.com/1/statuses/public_timeline.json?count=1'
+		logging.debug("Twitter query URL: %s" % query_url)
 		request = urllib2.Request(query_url)
 		try:
-			self.json = urllib2.urlopen(request)
+			self.response_from_twitter = urllib2.urlopen(request)
 		except urllib2.URLError, msg:
-			logger.error("Couldn't contact Twitter: %s" % msg)
-			self.json = None
+			logging.error("Couldn't contact Twitter: %s" % msg)
+			self.response_from_twitter = None
 			
-	def parse_json_to_dict(self):
-		'''Parse the JSON into a dict with the tweet
-		properties as keys.'''
+	def parse_twitter_response(self):
+		'''Try to parse Twitter's response into JSON, then extract from
+		the JSON a dict with the tweet properties as keys.'''
 		try:
-			self.tweet_dict = simplejson.load(self.json)[0]	
-		except Exception, msg:
-			logger.error("Couldn't parse JSON: %s: %s" % (Exception, msg))
-			self.tweet_dict = None
+			self.parsed_json = simplejson.load(self.response_from_twitter)
+			self.tweet_dict = self.parsed_json[0]	
+		except:
+			if "<title>" in self.response_from_twitter:
+				'''HTML response instead of JSON. There was an error
+				like a "fail whale."'''
+				self.tweet_dict = None
+				if "over capacity" in self.response_from_twitter.lower():
+					raise FailWhale
+				else:
+					raise TwitterError
+			raise
 			
 	def get_words(self):
 		'''Words are defined as the tokens created when the tweet is

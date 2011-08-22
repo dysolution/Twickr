@@ -34,13 +34,11 @@ class AllowOddThirdWords(TestCase):
 		self.example_tweets.append(Tweet(author='foo', text="Don't tell @mom the babysitter's dead."))
 		self.example_tweets.append(Tweet(author='foo', text="This is solid."))
 		self.example_tweets.append(Tweet(author='foo', text="I'm not leaving!!!!"))
-		self.example_tweets.append(Tweet(author='foo', text="What is #trending now?"))
 
 	def test_odd_third_words(self):
 		self.assertEqual(self.example_tweets[0].keyword, "@mom")
 		self.assertEqual(self.example_tweets[1].keyword, "solid.")
 		self.assertEqual(self.example_tweets[2].keyword, "leaving!!!!")
-		self.assertEqual(self.example_tweets[3].keyword, "#trending")
 
 class PickCorrectWord(TestCase):
 	def setUp(self):
