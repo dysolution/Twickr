@@ -52,4 +52,8 @@ class PickCorrectWord(TestCase):
 		self.assertEqual(self.example_tweets[1].keyword, "boss")
 		self.assertEqual(self.example_tweets[2].keyword, "scream.")
 
+class BrowserTests(TestCase):
 
+	def test_main_page(self):
+		response = self.client.get('/')
+		self.assertEqual(response.status_code, 200)
