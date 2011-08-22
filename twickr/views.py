@@ -14,7 +14,10 @@ from getty.twickr.flickr import ApiKeyNotSet, NoHits, UnknownFlickrError, Photo
 
 			
 def main_page(request):
-	t = Tweet()
+	try:
+		t = Tweet()
+	except FailWhale:
+		return HttpResponse("Twitter is over capacity. Please try again in a moment.")
 	logging.info("Keyword: %s" % t.keyword)
 	photo_url = None
 	try:
