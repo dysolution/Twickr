@@ -33,8 +33,6 @@ class FailWhale(Exception):
 class TwitterError(Exception):
 	pass
 	
-class BadTwitterResponse(Exception):
-	pass
 	
 class Tweet():
 
@@ -68,7 +66,7 @@ class Tweet():
 			except:
 				self.words = None
 				self.keyword = None
-				raise BadTwitterResponse
+				raise
 			
 			self.author = self.tweet_dict['user']['screen_name']
 			self.text = self.tweet_dict['text']

@@ -18,6 +18,8 @@ def main_page(request):
 		t = Tweet()
 	except FailWhale:
 		return HttpResponse("Twitter is over capacity. Please try again in a moment.")
+	except TwitterError:
+		return HttpResponse("There was an error getting a tweet from Twitter. Please try again in a moment.")
 	logging.info("Keyword: %s" % t.keyword)
 	photo_url = None
 	try:
